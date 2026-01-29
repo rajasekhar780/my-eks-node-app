@@ -2,15 +2,11 @@ pipeline {
     agent any
     
     environment {
-        // 1. These IDs must match the "ID" field you set in Jenkins Credentials UI
         DOCKER_HUB_CREDS = credentials('docker-hub-creds') 
         K8S_SECRET_ID    = 'k8s-config-text' 
         
-        // 2. Change these to your actual Docker Hub details
-        DOCKER_USER      = "your-dockerhub-username"
-        IMAGE_NAME       = "nodejs-eks-app"
-        
-        // This helps track versions (e.g., nodejs-eks-app:1, nodejs-eks-app:2)
+        DOCKER_USER      = "rajasekhar142"
+        IMAGE_NAME       = "my-docker-app"
         IMAGE_TAG        = "${env.BUILD_NUMBER}"
     }
     
@@ -31,7 +27,12 @@ pipeline {
         stage('Build & Push to Docker Hub') {
             steps {
                 sh """
-                    # Build the image using the Dockerfile in the repo
+                    # Create a folder named 'build-assets' (or whatever name you prefer)
+                    mkdir -p my-custom-folder
+                    
+                    # Optional: Move files into it or just log it
+                    echo "Folder created for build ${env.BUILD_NUMBER}" > my-custom-folder/build-info.txt
+                    
                     docker build -t ${DOCKER_USER}/${IMAGE_NAME}:${IMAGE_TAG} .
                     docker tag ${DOCKER_USER}/${IMAGE_NAME}:${IMAGE_TAG} ${DOCKER_USER}/${IMAGE_NAME}:latest
                     
