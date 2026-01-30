@@ -56,7 +56,7 @@ pipeline {
                         kubectl --kubeconfig=${KUBECONFIG_PATH} apply -f nodejsapp.yaml
                         
                         # Wait for the rollout to finish
-                        kubectl --kubeconfig=${KUBECONFIG_PATH} rollout status deployment/nodeapp-deployment
+                        kubectl --kubeconfig=${KUBECONFIG_PATH} rollout status deployment/nodejs-app
                     """
                 }
             }
