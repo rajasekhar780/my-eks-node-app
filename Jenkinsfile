@@ -45,34 +45,28 @@ pipeline {
         }
 
         stage('Deploy to EKS (US-East-1)') {
-            steps {
-                // This uses your copy-pasted Secret Text
-                withCredentials([string(credentialsId: "${K8S_SECRET_ID}", variable: 'KUBE_TEXT')]) {
-                    sh '''
-                        # 1. Create temporary config file
-                        echo "$KUBE_TEXT" > kubeconfig
-                        
-                        # 2. Update the YAML file to use the new image version
-                        # This looks for 'image:' in nodejsapp.yaml and updates it
-                        sed -i "s|image:.*|image: ${DOCKER_USER}/${IMAGE_NAME}:${IMAGE_TAG}|g" nodejsapp.yaml
-                        
-                        # 3. Apply the changes to the cluster in the US
-                        kubectl --kubeconfig=kubeconfig apply -f nodejsapp.yaml
-                        
-                        # 4. Verify deployment status
-                        kubectl --kubeconfig=kubeconfig rollout status deployment/nodeapp-deployment
-                        
-                        # 5. Securely remove the config file
-                        rm kubeconfig
-                    '''
-                }
+        steps {
+            // Change 'string' to 'file' to match your new credential type
+            withCredentials([file(credentialsId: 'k8s-config-file', variable: 'KUBECONFIG_PATH')]) {
+                sh """
+                    # 1. Update the YAML file to use the new image version
+                    # We use the variable ${KUBECONFIG_PATH} which Jenkins creates for the file
+                    sed -i "s|image:.*|image: ${DOCKER_USER}/${IMAGE_NAME}:${IMAGE_TAG}|g" nodejsapp.yaml
+                    
+                    # 2. Apply the changes using the file path provided by Jenkins
+                    kubectl --kubeconfig=${KUBECONFIG_PATH} apply -f nodejsapp.yaml
+                    
+                    # 3. Verify deployment status
+                    kubectl --kubeconfig=${KUBECONFIG_PATH} rollout status deployment/nodeapp-deployment
+                """
             }
         }
     }
-    
+
     post {
         always {
-            sh "docker logout" // Clear credentials from the Jenkins server
+            // This is good practice to keep the server clean
+            sh "docker logout" 
         }
     }
 }
